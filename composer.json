@@ -9,13 +9,16 @@
         "source": "https://github.com/zestic/auth-library"
     },
     "require": {
-        "php": "^8.3"
+        "php": "^8.3",
+        "nesbot/carbon": "^3.11",
+        "ramsey/uuid": "^4.9"
     },
     "require-dev": {
         "ergebnis/composer-normalize": "^2.47",
         "friendsofphp/php-cs-fixer": "^3.86",
         "phpstan/phpstan": "^2.1",
-        "phpunit/phpunit": "^11.0"
+        "phpunit/phpunit": "^11.0",
+        "robmorgan/phinx": "^0.16.10"
     },
     "autoload": {
         "psr-4": {
