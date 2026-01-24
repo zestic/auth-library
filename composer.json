@@ -1,0 +1,67 @@
+{
+    "name": "your-vendor/your-package",
+    "description": "A brief description of your package",
+    "license": "Apache-2.0",
+    "type": "library",
+    "authors": [
+        {
+            "name": "Your Name",
+            "email": "your-email@example.com",
+            "homepage": "https://your-website.com",
+            "role": "Developer"
+        }
+    ],
+    "homepage": "https://github.com/your-username/your-repo",
+    "support": {
+        "issues": "https://github.com/your-username/your-repo/issues",
+        "source": "https://github.com/your-username/your-repo"
+    },
+    "require": {
+        "php": "^8.3"
+    },
+    "require-dev": {
+        "ergebnis/composer-normalize": "^2.47",
+        "friendsofphp/php-cs-fixer": "^3.86",
+        "phpstan/phpstan": "^2.1",
+        "phpunit/phpunit": "^11.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "YourVendor\\YourPackage\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "YourVendor\\YourPackage\\Tests\\": "tests/"
+        }
+    },
+    "config": {
+        "allow-plugins": {
+            "ergebnis/composer-normalize": true
+        }
+    },
+    "scripts": {
+        "composer-normalize": "composer normalize --dry-run",
+        "cs-check": "php-cs-fixer fix --dry-run --diff",
+        "cs-fix": "php-cs-fixer fix",
+        "cs-fix:dry-run": "php-cs-fixer fix --dry-run --diff",
+        "phpstan": "phpstan analyse",
+        "phpstan:baseline": "phpstan analyse --generate-baseline",
+        "quality": [
+            "@phpstan",
+            "@cs-check"
+        ],
+        "quality:fix": [
+            "@phpstan",
+            "@cs-fix"
+        ],
+        "remove-example": "php remove-example.php",
+        "security-audit": "composer audit",
+        "setup": "php setup.php",
+        "test": "phpunit",
+        "test:coverage": "phpunit --coverage-html coverage/html",
+        "test:coverage-text": "phpunit --coverage-text",
+        "test:integration": "phpunit --testsuite=Integration",
+        "test:unit": "phpunit --testsuite=Unit"
+    }
+}
