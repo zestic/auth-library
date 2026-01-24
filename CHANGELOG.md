@@ -24,5 +24,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Initial release
 
-[Unreleased]: https://github.com/your-username/your-repo/compare/v1.0.0...HEAD
-[1.0.0]: https://github.com/your-username/your-repo/releases/tag/v1.0.0
+[Unreleased]: https://github.com/zestic/auth-library/compare/v1.0.0...HEAD
+[1.0.0]: https://github.com/zestic/auth-library/releases/tag/v1.0.0

@@ -1,31 +1,12 @@
-# Your Library Name
+# Auth Library
 
-<!--
-TEMPLATE SETUP:
-Run `composer setup` to automatically configure this template with your project details.
-This will replace all placeholders with your actual information and remove the setup script.
-
-Manual setup (if preferred):
-1. Replace all instances of "your-vendor" with your actual vendor name (e.g., "acme")
-2. Replace all instances of "your-package" with your actual package name (e.g., "awesome-library")
-3. Replace all instances of "YourVendor" with your actual vendor namespace (e.g., "Acme")
-4. Replace all instances of "YourPackage" with your actual package namespace (e.g., "AwesomeLibrary")
-5. Replace all instances of "your-username" with your GitHub username
-6. Replace all instances of "your-repo" with your repository name
-7. Replace "Your Name" and "your-email@example.com" with your actual details
-8. Update the description and features below
-9. Remove this comment block when done
--->
-
-<!-- Replace with your actual badges -->
-[![Latest Version](https://img.shields.io/packagist/v/your-vendor/your-package.svg)](https://packagist.org/packages/your-vendor/your-package)
-[![codecov](https://codecov.io/gh/your-username/your-repo/graph/badge.svg?token=YOUR_CODECOV_TOKEN)](https://codecov.io/gh/your-username/your-repo)
+[![Latest Version](https://img.shields.io/packagist/v/zestic/auth-library.svg)](https://packagist.org/packages/zestic/auth-library)
+[![codecov](https://codecov.io/gh/zestic/auth-library/graph/badge.svg?token=YOUR_CODECOV_TOKEN)](https://codecov.io/gh/zestic/auth-library)
 ![PHP Version](https://img.shields.io/badge/PHP-8.3%2B-blue)
-![Tests](https://github.com/your-username/your-repo/workflows/Tests/badge.svg)
+![Tests](https://github.com/zestic/auth-library/workflows/Tests/badge.svg)
 ![License](https://img.shields.io/badge/License-Apache%202.0-blue)
 
-<!-- Add a brief description of what your library does -->
-A brief description of what your library does and why it's useful.
+Classes and utils for Auth
 
 ## Features
 
@@ -44,7 +25,7 @@ A brief description of what your library does and why it's useful.
 Install via Composer:
 
 ```bash
-composer require your-vendor/your-package
+composer require zestic/auth-library
 ```
 
 ## Quick Start
@@ -54,7 +35,7 @@ composer require your-vendor/your-package
 ```php
 <?php
 
-use YourVendor\YourPackage\YourClass;
+use Zestic\Auth\YourClass;
 
 // Basic usage example
 $instance = new YourClass();
@@ -135,5 +116,4 @@ This project is licensed under the Apache License 2.0. Please see [LICENSE](LICE
 
 ## Credits
 
-- [Your Name](https://github.com/your-username)
 - [All Contributors](../../contributors)

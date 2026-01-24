@@ -7,8 +7,8 @@ Thank you for considering contributing to this project! We welcome contributions
 1. Fork the repository
 2. Clone your fork:
    ```bash
-   git clone https://github.com/your-username/your-repo.git
-   cd your-repo
+   git clone https://github.com/zestic/auth-library.git
+   cd auth-library
    ```
 3. Install dependencies:
    ```bash

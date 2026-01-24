@@ -74,4 +74,4 @@ When using this library:
 
 For security-related questions or concerns, contact:
 - Email: [security@your-domain.com](mailto:security@your-domain.com)
-- Maintainer: [@your-username](https://github.com/your-username)
+- Maintainer: [@zestic](https://github.com/zestic)

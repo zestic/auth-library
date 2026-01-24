@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace YourVendor\YourPackage\Tests\Integration;
+namespace Zestic\Auth\Tests\Integration;
 
 use PHPUnit\Framework\TestCase;
 

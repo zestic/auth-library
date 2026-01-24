@@ -1,20 +1,12 @@
 {
-    "name": "your-vendor/your-package",
-    "description": "A brief description of your package",
+    "name": "zestic/auth-library",
+    "description": "Classes and utils for auth",
     "license": "Apache-2.0",
     "type": "library",
-    "authors": [
-        {
-            "name": "Your Name",
-            "email": "your-email@example.com",
-            "homepage": "https://your-website.com",
-            "role": "Developer"
-        }
-    ],
-    "homepage": "https://github.com/your-username/your-repo",
+    "homepage": "https://github.com/zestic/auth-library",
     "support": {
-        "issues": "https://github.com/your-username/your-repo/issues",
-        "source": "https://github.com/your-username/your-repo"
+        "issues": "https://github.com/zestic/auth-library/issues",
+        "source": "https://github.com/zestic/auth-library"
     },
     "require": {
         "php": "^8.3"
@@ -27,12 +19,12 @@
     },
     "autoload": {
         "psr-4": {
-            "YourVendor\\YourPackage\\": "src/"
+            "Zestic\\Auth\\": "src/"
         }
     },
     "autoload-dev": {
         "psr-4": {
-            "YourVendor\\YourPackage\\Tests\\": "tests/"
+            "Zestic\\Auth\\Tests\\": "tests/"
         }
     },
     "config": {
@@ -55,9 +47,7 @@
             "@phpstan",
             "@cs-fix"
         ],
-        "remove-example": "php remove-example.php",
         "security-audit": "composer audit",
-        "setup": "php setup.php",
         "test": "phpunit",
         "test:coverage": "phpunit --coverage-html coverage/html",
         "test:coverage-text": "phpunit --coverage-text",
