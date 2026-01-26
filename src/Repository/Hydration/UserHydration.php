@@ -9,15 +9,22 @@ use Zestic\Auth\Contract\Entity\UserInterface;
 use Zestic\Auth\Contract\Repository\UserHydrationInterface;
 use Zestic\Auth\Entity\User;
 
+/**
+ * @implements UserHydrationInterface<User>
+ */
 class UserHydration implements UserHydrationInterface
 {
-    public function dehydrate(UserInterface $user): array
+    /**
+     * @param User $user
+     */
+    public function dehydrate(UserInterface|User $user): array
     {
         return [
             'additional_data' => $user->getAdditionalData(),
             'display_name' => $user->getDisplayName(),
             'email' => $user->getEmail(),
             'id' => $user->getId(),
+            'identifiers' => $user->getIdentifiers(),
             'system_id' => $user->getSystemId(),
             'verified_at' => $user->getVerifiedAt()?->toDateTimeString(),
         ];
@@ -31,9 +38,11 @@ class UserHydration implements UserHydrationInterface
         return $user;
     }
 
-    public function update(UserInterface $user, array $data): void
+    /**
+     * @param User $user
+     */
+    public function update(UserInterface|User $user, array $data): void
     {
-        /* @var User $user */
         if (isset($data['additional_data'])) {
             $user->setAdditionalData($data['additional_data']);
         }
@@ -45,6 +54,9 @@ class UserHydration implements UserHydrationInterface
         }
         if (isset($data['id'])) {
             $user->setId($data['id']);
+        }
+        if (isset($data['identifiers'])) {
+            $user->setIdentifiers($data['identifiers']);
         }
         if (isset($data['system_id'])) {
             $user->setSystemId($data['system_id']);

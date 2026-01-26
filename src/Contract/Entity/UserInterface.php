@@ -19,6 +19,13 @@ interface UserInterface
 
     public function getId(): string|int;
 
+    /**
+     * Returns an array of identifiers for the user.
+     *
+     * @return array<array<string, mixed>>
+     */
+    public function getIdentifiers(): array;
+
     public function getSystemId(): string|int|null;
 
     public function isVerified(): bool;

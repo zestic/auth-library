@@ -14,7 +14,10 @@ class User implements UserInterface
     private ?string $displayName = null;
     private string $email;
     private string|int $id;
-    private ?string $identifier = null;
+    /**
+     * @var array<array<string, mixed>>
+     */
+    private array $identifiers = [];
     private string|int|null $systemId = null;
     private ?CarbonInterface $verifiedAt = null;
 
@@ -72,14 +75,24 @@ class User implements UserInterface
         return $this;
     }
 
-    public function getIdentifier(): ?string
+    /**
+     * Returns an array of identifiers for the user.
+     *
+     * @return array<array<string, mixed>>
+     */
+    public function getIdentifiers(): array
     {
-        return $this->identifier;
+        return $this->identifiers;
     }
 
-    public function setIdentifier(?string $identifier): self
+    /**
+     * @param array<array<string, mixed>> $identifiers
+     *
+     * @return $this
+     */
+    public function setIdentifiers(array $identifiers): self
     {
-        $this->identifier = $identifier;
+        $this->identifiers = $identifiers;
 
         return $this;
     }
