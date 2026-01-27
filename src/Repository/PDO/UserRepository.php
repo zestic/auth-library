@@ -10,6 +10,7 @@ use Zestic\Auth\Contract\Entity\UserInterface;
 use Zestic\Auth\Contract\Repository\UserHydrationInterface;
 use Zestic\Auth\Contract\Repository\UserRepositoryInterface;
 use Zestic\Auth\Entity\User;
+use Zestic\Auth\Entity\Identifier;
 
 class UserRepository extends AbstractPDORepository implements UserRepositoryInterface
 {
@@ -38,20 +39,42 @@ class UserRepository extends AbstractPDORepository implements UserRepositoryInte
     {
         $id = $this->generateUniqueIdentifier();
         $stmt = $this->pdo->prepare(
-            'INSERT INTO ' . $this->schema . 'users (id, email, display_name, additional_data, identifiers, verified_at)
-            VALUES (:id, :email, :display_name, :additional_data, :identifiers, :verified_at)'
+            'INSERT INTO ' . $this->schema . 'users (id, email, display_name, additional_data, system_id, verified_at)
+            VALUES (:id, :email, :display_name, :additional_data, :system_id, :verified_at)'
         );
-        $additionalData = $context->get('additionalData');
-
+        $data = $context->toArray();
+        $data['id'] = $id;
         try {
-            $data = $context->toArray();
-            $data['id'] = $id;
             $stmt->execute($data);
+            // Persist identifiers if present
+            if (!empty($data['identifiers']) && is_array($data['identifiers'])) {
+                foreach ($data['identifiers'] as $identifier) {
+                    if ($identifier instanceof Identifier) {
+                        $this->insertIdentifier($id, $identifier);
+                    } elseif (is_array($identifier) && isset($identifier['provider'], $identifier['id'])) {
+                        $this->insertIdentifier($id, new Identifier($identifier['provider'], $identifier['id'], $identifier['raw_data'] ?? null));
+                    }
+                }
+            }
 
             return $id;
         } catch (\PDOException $e) {
             throw new \RuntimeException('Failed to create user', 0, $e);
         }
+    }
+
+    private function insertIdentifier(string|int $userId, Identifier $identifier): void
+    {
+        $stmt = $this->pdo->prepare(
+            'INSERT INTO ' . $this->schema . 'user_identifiers (user_id, provider, identifier_id, raw_data)
+            VALUES (:user_id, :provider, :identifier_id, :raw_data)'
+        );
+        $stmt->execute([
+            'user_id' => $userId,
+            'provider' => $identifier->getProvider(),
+            'identifier_id' => $identifier->getId(),
+            'raw_data' => $identifier->getRawData(),
+        ]);
     }
 
     public function findUserByEmail(string $email): ?UserInterface
@@ -67,7 +90,7 @@ class UserRepository extends AbstractPDORepository implements UserRepositoryInte
     private function findUserBy(string $field, string $value): ?UserInterface
     {
         $stmt = $this->pdo->prepare(
-            'SELECT additional_data, identifiers, email, display_name, id, system_id, verified_at
+            'SELECT additional_data, email, display_name, id, system_id, verified_at
             FROM ' . $this->schema . 'users
             WHERE ' . $field . ' = :' . $field
         );
@@ -78,7 +101,28 @@ class UserRepository extends AbstractPDORepository implements UserRepositoryInte
             return null;
         }
 
+        // Load identifiers from user_identifiers table
+        $userData['identifiers'] = $this->fetchIdentifiers($userData['id']);
+
         return $this->hydration->hydrate($userData);
+    }
+
+    /**
+     * @return array<Identifier>
+     */
+    private function fetchIdentifiers(string|int $userId): array
+    {
+        $stmt = $this->pdo->prepare(
+            'SELECT provider, identifier_id, raw_data FROM ' . $this->schema . 'user_identifiers WHERE user_id = :user_id'
+        );
+        $stmt->execute(['user_id' => $userId]);
+        $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+        $identifiers = [];
+        foreach ($rows as $row) {
+            $identifiers[$row['provider']] = new Identifier($row['provider'], $row['identifier_id'], $row['raw_data']);
+        }
+
+        return $identifiers;
     }
 
     public function emailExists(string $email): bool
@@ -106,7 +150,6 @@ class UserRepository extends AbstractPDORepository implements UserRepositoryInte
         SET email = :email,
             display_name = :display_name,
             additional_data = :additional_data,
-            identifiers = :identifiers,
             system_id = :system_id,
             verified_at = :verified_at
         WHERE id = :id'
@@ -115,9 +158,23 @@ class UserRepository extends AbstractPDORepository implements UserRepositoryInte
         try {
             $result = $stmt->execute($this->hydration->dehydrate($user));
 
+            // Update identifiers: delete old, insert new
+            $this->deleteIdentifiers($user->getId());
+            foreach ($user->getIdentifiers() as $identifier) {
+                $this->insertIdentifier($user->getId(), $identifier);
+            }
+
             return $result && $stmt->rowCount() > 0;
         } catch (\PDOException $e) {
             throw new \RuntimeException('Failed to update user', 0, $e);
         }
+    }
+
+    private function deleteIdentifiers(string|int $userId): void
+    {
+        $stmt = $this->pdo->prepare(
+            'DELETE FROM ' . $this->schema . 'user_identifiers WHERE user_id = :user_id'
+        );
+        $stmt->execute(['user_id' => $userId]);
     }
 }

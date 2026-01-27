@@ -8,6 +8,7 @@ use Carbon\Carbon;
 use Zestic\Auth\Contract\Entity\UserInterface;
 use Zestic\Auth\Contract\Repository\UserHydrationInterface;
 use Zestic\Auth\Entity\User;
+use Zestic\Auth\Entity\Identifier;
 
 /**
  * @implements UserHydrationInterface<User>
@@ -24,7 +25,6 @@ class UserHydration implements UserHydrationInterface
             'display_name' => $user->getDisplayName(),
             'email' => $user->getEmail(),
             'id' => $user->getId(),
-            'identifiers' => $user->getIdentifiers(),
             'system_id' => $user->getSystemId(),
             'verified_at' => $user->getVerifiedAt()?->toDateTimeString(),
         ];
@@ -55,8 +55,20 @@ class UserHydration implements UserHydrationInterface
         if (isset($data['id'])) {
             $user->setId($data['id']);
         }
-        if (isset($data['identifiers'])) {
-            $user->setIdentifiers($data['identifiers']);
+        if (isset($data['identifiers']) && is_array($data['identifiers'])) {
+            $identifiers = [];
+            foreach ($data['identifiers'] as $provider => $identifierData) {
+                if ($identifierData instanceof Identifier) {
+                    $identifiers[$provider] = $identifierData;
+                } elseif (is_array($identifierData) && isset($identifierData['provider'], $identifierData['id'])) {
+                    $identifiers[$identifierData['provider']] = new Identifier(
+                        $identifierData['provider'],
+                        $identifierData['id'],
+                        $identifierData['raw_data'] ?? null
+                    );
+                }
+            }
+            $user->setIdentifiers($identifiers);
         }
         if (isset($data['system_id'])) {
             $user->setSystemId($data['system_id']);

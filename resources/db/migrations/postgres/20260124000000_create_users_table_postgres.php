@@ -31,7 +31,6 @@ class CreateUsersTablePostgres extends AbstractMigration
                 'null' => false,
             ])
             ->addColumn('additional_data', 'jsonb', ['null' => true])
-            ->addColumn('identifiers', 'jsonb', ['null' => false, 'default' => "'[]'::jsonb"])
             ->addColumn('display_name', 'string', ['limit' => 255, 'null' => false])
             ->addColumn('email', 'string', ['limit' => 255, 'null' => false])
             ->addColumn('system_id', 'string', ['limit' => 255, 'null' => true])

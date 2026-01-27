@@ -8,6 +8,7 @@ use Carbon\CarbonImmutable;
 use Zestic\Auth\Tests\Utils\UserValues;
 use PHPUnit\Framework\TestCase;
 use Zestic\Auth\Entity\User;
+use Zestic\Auth\Entity\Identifier;
 
 class UserTest extends TestCase
 {
@@ -17,12 +18,13 @@ class UserTest extends TestCase
     {
         $verifiedAt = new CarbonImmutable(self::VERIFIED_AT);
 
+        $identifier = $this->testIdentifier();
         $user = (new User())
             ->setAdditionalData(self::ADDITIONAL_DATA)
             ->setDisplayName(self::DISPLAY_NAME)
             ->setEmail(self::EMAIL)
             ->setId(self::ID)
-            ->setIdentifiers(self::IDENTIFIERS)
+            ->setIdentifiers(['main' => $identifier])
             ->setSystemId(self::SYSTEM_ID)
             ->setVerifiedAt($verifiedAt);
 
@@ -30,9 +32,21 @@ class UserTest extends TestCase
         $this->assertSame(self::DISPLAY_NAME, $user->getDisplayName());
         $this->assertSame(self::EMAIL, $user->getEmail());
         $this->assertSame(self::ID, $user->getId());
-        $this->assertSame(self::IDENTIFIERS, $user->getIdentifiers());
+        $this->assertArrayHasKey('main', $user->getIdentifiers());
+        $this->assertInstanceOf(Identifier::class, $user->getIdentifiers()['main']);
+        $this->assertSame('main', $user->getIdentifiers()['main']->getProvider());
+        $this->assertSame('id10T', $user->getIdentifiers()['main']->getId());
         $this->assertSame(self::SYSTEM_ID, $user->getSystemId());
         $this->assertEquals($verifiedAt, $user->getVerifiedAt());
         $this->assertTrue($user->isVerified());
+    }
+
+    public function testAddIdentifierAndGetByProvider(): void
+    {
+        $user = new User();
+        $identifier = $this->testIdentifier();
+        $user->addIdentifier($identifier);
+        $retrievedIdentifier = $user->getIdentifierByProvider('main');
+        $this->assertSame($identifier, $retrievedIdentifier);
     }
 }

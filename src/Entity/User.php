@@ -15,7 +15,7 @@ class User implements UserInterface
     private string $email;
     private string|int $id;
     /**
-     * @var array<array<string, mixed>>
+     * @var array<string, Identifier>
      */
     private array $identifiers = [];
     private string|int|null $systemId = null;
@@ -75,20 +75,28 @@ class User implements UserInterface
         return $this;
     }
 
+    public function addIdentifier(Identifier $identifier): self
+    {
+        $this->identifiers[$identifier->getProvider()] = $identifier;
+
+        return $this;
+    }
+
     /**
-     * Returns an array of identifiers for the user.
-     *
-     * @return array<array<string, mixed>>
+     * @return array<string, Identifier>
      */
     public function getIdentifiers(): array
     {
         return $this->identifiers;
     }
 
+    public function getIdentifierByProvider(string $provider): ?Identifier
+    {
+        return $this->identifiers[$provider] ?? null;
+    }
+
     /**
-     * @param array<array<string, mixed>> $identifiers
-     *
-     * @return $this
+     * @param array<string, Identifier> $identifiers
      */
     public function setIdentifiers(array $identifiers): self
     {

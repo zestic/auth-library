@@ -11,7 +11,6 @@ final class CreateUsersTable extends AbstractMigration
         $this->table('users', ['id' => false, 'primary_key' => ['id']])
             ->addColumn('id', 'string', ['limit' => 100, 'null' => false])
             ->addColumn('additional_data', 'json', ['null' => false])
-            ->addColumn('identifiers', 'json', ['null' => false, 'default' => '[]'])
             ->addColumn('display_name', 'string', ['limit' => 255, 'null' => true])
             ->addColumn('email', 'string', ['limit' => 255, 'null' => false])
             ->addColumn('system_id', 'string', ['limit' => 100, 'null' => true])

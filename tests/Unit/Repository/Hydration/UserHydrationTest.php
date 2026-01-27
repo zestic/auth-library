@@ -6,6 +6,7 @@ namespace Zestic\Auth\Tests\Unit\Repository\Hydration;
 
 use Carbon\Carbon;
 use PHPUnit\Framework\TestCase;
+use Zestic\Auth\Entity\Identifier;
 use Zestic\Auth\Entity\User;
 use Zestic\Auth\Repository\Hydration\UserHydration;
 use Zestic\Auth\Tests\Utils\UserValues;
@@ -21,22 +22,24 @@ class UserHydrationTest extends TestCase
             ->setDisplayName(self::DISPLAY_NAME)
             ->setEmail(self::EMAIL)
             ->setId(self::ID)
-            ->setIdentifiers(self::IDENTIFIERS)
+            ->setIdentifiers([
+                'main' => $this->testIdentifier(),
+            ])
             ->setSystemId(self::SYSTEM_ID)
             ->setVerifiedAt(new Carbon(self::VERIFIED_AT));
 
         $hydrator = new UserHydration();
         $result = $hydrator->dehydrate($user);
 
-        $this->assertEquals([
+        $expected = [
             'additional_data' => self::ADDITIONAL_DATA,
             'display_name' => self::DISPLAY_NAME,
             'email' => self::EMAIL,
             'id' => self::ID,
-            'identifiers' => self::IDENTIFIERS,
             'system_id' => self::SYSTEM_ID,
             'verified_at' => self::VERIFIED_AT,
-        ], $result);
+        ];
+        $this->assertEquals($expected, $result);
     }
 
     public function testHydrateCreatesUserWithData(): void
@@ -58,7 +61,10 @@ class UserHydrationTest extends TestCase
         $this->assertEquals(self::DISPLAY_NAME, $user->getDisplayName());
         $this->assertEquals(self::EMAIL, $user->getEmail());
         $this->assertEquals(self::ID, $user->getId());
-        $this->assertEquals(self::IDENTIFIERS, $user->getIdentifiers());
+        $this->assertArrayHasKey('main', $user->getIdentifiers());
+        $this->assertInstanceOf(Identifier::class, $user->getIdentifiers()['main']);
+        $this->assertEquals('main', $user->getIdentifiers()['main']->getProvider());
+        $this->assertEquals('id10T', $user->getIdentifiers()['main']->getId());
         $this->assertEquals(self::SYSTEM_ID, $user->getSystemId());
         $this->assertEquals(self::VERIFIED_AT, $user->getVerifiedAt()?->toDateTimeString());
     }
@@ -82,7 +88,10 @@ class UserHydrationTest extends TestCase
         $this->assertEquals(self::DISPLAY_NAME, $user->getDisplayName());
         $this->assertEquals(self::EMAIL, $user->getEmail());
         $this->assertEquals(self::ID, $user->getId());
-        $this->assertEquals(self::IDENTIFIERS, $user->getIdentifiers());
+        $this->assertArrayHasKey('main', $user->getIdentifiers());
+        $this->assertInstanceOf(Identifier::class, $user->getIdentifiers()['main']);
+        $this->assertEquals('main', $user->getIdentifiers()['main']->getProvider());
+        $this->assertEquals('id10T', $user->getIdentifiers()['main']->getId());
         $this->assertEquals(self::SYSTEM_ID, $user->getSystemId());
         $this->assertEquals(self::VERIFIED_AT, $user->getVerifiedAt()?->toDateTimeString());
     }

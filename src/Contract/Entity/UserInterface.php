@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Zestic\Auth\Contract\Entity;
 
 use Carbon\CarbonInterface;
+use Zestic\Auth\Entity\Identifier;
 
 interface UserInterface
 {
@@ -20,11 +21,11 @@ interface UserInterface
     public function getId(): string|int;
 
     /**
-     * Returns an array of identifiers for the user.
-     *
-     * @return array<array<string, mixed>>
+     * @return array<string, Identifier>
      */
     public function getIdentifiers(): array;
+
+    public function getIdentifierByProvider(string $provider): ?Identifier;
 
     public function getSystemId(): string|int|null;
 
