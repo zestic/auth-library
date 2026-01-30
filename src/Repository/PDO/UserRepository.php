@@ -63,54 +63,14 @@ class UserRepository extends AbstractPDORepository implements UserRepositoryInte
         }
     }
 
-    private function insertIdentifier(string|int $userId, Identifier $identifier): void
+    public function emailExists(string $email): bool
     {
-        // Check if identifier exists (even soft-deleted)
         $stmt = $this->pdo->prepare(
-            'SELECT deleted_at FROM ' . $this->schema . 'user_identifiers WHERE user_id = :user_id AND provider = :provider AND identifier_id = :identifier_id'
+            'SELECT COUNT(*) FROM ' . $this->schema . 'users WHERE email = :email'
         );
-        $stmt->execute([
-            'user_id' => $userId,
-            'provider' => $identifier->getProvider(),
-            'identifier_id' => $identifier->getId(),
-        ]);
-        $row = $stmt->fetch(PDO::FETCH_ASSOC);
-        if ($row !== false) {
-            // If soft-deleted, restore it
-            if ($row['deleted_at'] !== null) {
-                $update = $this->pdo->prepare(
-                    'UPDATE ' . $this->schema . 'user_identifiers SET deleted_at = NULL, raw_data = :raw_data WHERE user_id = :user_id AND provider = :provider AND identifier_id = :identifier_id'
-                );
-                $update->execute([
-                    'raw_data' => $identifier->getRawData(),
-                    'user_id' => $userId,
-                    'provider' => $identifier->getProvider(),
-                    'identifier_id' => $identifier->getId(),
-                ]);
-            } else {
-                // Already exists and not deleted, update raw_data if needed
-                $update = $this->pdo->prepare(
-                    'UPDATE ' . $this->schema . 'user_identifiers SET raw_data = :raw_data WHERE user_id = :user_id AND provider = :provider AND identifier_id = :identifier_id'
-                );
-                $update->execute([
-                    'raw_data' => $identifier->getRawData(),
-                    'user_id' => $userId,
-                    'provider' => $identifier->getProvider(),
-                    'identifier_id' => $identifier->getId(),
-                ]);
-            }
-        } else {
-            // Insert new
-            $insert = $this->pdo->prepare(
-                'INSERT INTO ' . $this->schema . 'user_identifiers (user_id, provider, identifier_id, raw_data) VALUES (:user_id, :provider, :identifier_id, :raw_data)'
-            );
-            $insert->execute([
-                'user_id' => $userId,
-                'provider' => $identifier->getProvider(),
-                'identifier_id' => $identifier->getId(),
-                'raw_data' => $identifier->getRawData(),
-            ]);
-        }
+        $stmt->execute(['email' => $email]);
+
+        return ((int) $stmt->fetchColumn()) > 0;
     }
 
     public function findUserByEmail(string $email): ?UserInterface
@@ -123,52 +83,14 @@ class UserRepository extends AbstractPDORepository implements UserRepositoryInte
         return $this->findUserBy('id', $id);
     }
 
-    private function findUserBy(string $field, string $value): ?UserInterface
+    public function findUserByIdentity(string $identifier, string|int $id): ?UserInterface
     {
-        $stmt = $this->pdo->prepare(
-            'SELECT additional_data, email, display_name, id, system_id, verified_at
-            FROM ' . $this->schema . 'users
-            WHERE ' . $field . ' = :' . $field
-        );
-        $stmt->execute([$field => $value]);
-        $userData = $stmt->fetch(\PDO::FETCH_ASSOC);
+        $sql = $this->selectFromSQL()
+        . 'LEFT JOIN ' . $this->schema . 'user_identifiers AS ui ON ' . $this->schema . 'u.id = ' . $this->schema . 'ui.user_id '
+        . 'WHERE ' . $this->schema . 'ui.provider = :provider AND ' . $this->schema . 'ui.identifier_id = :identifier_id '
+        . 'AND ' . $this->schema . 'ui.deleted_at IS NULL';
 
-        if ($userData === false) {
-            return null;
-        }
-
-        // Load identifiers from user_identifiers table
-        $userData['identifiers'] = $this->fetchIdentifiers($userData['id']);
-
-        return $this->hydration->hydrate($userData);
-    }
-
-    /**
-     * @return array<Identifier>
-     */
-    private function fetchIdentifiers(string|int $userId): array
-    {
-        $stmt = $this->pdo->prepare(
-            'SELECT provider, identifier_id, raw_data FROM ' . $this->schema . 'user_identifiers WHERE user_id = :user_id AND deleted_at IS NULL'
-        );
-        $stmt->execute(['user_id' => $userId]);
-        $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
-        $identifiers = [];
-        foreach ($rows as $row) {
-            $identifiers[$row['provider']] = new Identifier($row['provider'], $row['identifier_id'], $row['raw_data']);
-        }
-
-        return $identifiers;
-    }
-
-    public function emailExists(string $email): bool
-    {
-        $stmt = $this->pdo->prepare(
-            'SELECT COUNT(*) FROM ' . $this->schema . 'users WHERE email = :email'
-        );
-        $stmt->execute(['email' => $email]);
-
-        return ((int) $stmt->fetchColumn()) > 0;
+        return $this->findUser($sql);
     }
 
     public function rollback(): void
@@ -182,7 +104,7 @@ class UserRepository extends AbstractPDORepository implements UserRepositoryInte
     public function update(UserInterface|User $user): bool
     {
         $stmt = $this->pdo->prepare(
-            'UPDATE ' . $this->schema . 'users
+            'UPDATE ' . $this->schema . ' users
         SET email = :email,
             display_name = :display_name,
             additional_data = :additional_data,
@@ -237,6 +159,74 @@ class UserRepository extends AbstractPDORepository implements UserRepositoryInte
     }
 
     /**
+     * @return array<Identifier>
+     */
+    private function fetchIdentifiers(string|int $userId): array
+    {
+        $stmt = $this->pdo->prepare(
+            'SELECT provider, identifier_id, raw_data FROM ' . $this->schema . 'user_identifiers WHERE user_id = :user_id AND deleted_at IS NULL'
+        );
+        $stmt->execute(['user_id' => $userId]);
+        $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+        $identifiers = [];
+        foreach ($rows as $row) {
+            $identifiers[$row['provider']] = new Identifier($row['provider'], $row['identifier_id'], $row['raw_data']);
+        }
+
+        return $identifiers;
+    }
+
+    private function insertIdentifier(string|int $userId, Identifier $identifier): void
+    {
+        // Check if identifier exists (even soft-deleted)
+        $stmt = $this->pdo->prepare(
+            'SELECT deleted_at FROM ' . $this->schema . 'user_identifiers WHERE user_id = :user_id AND provider = :provider AND identifier_id = :identifier_id'
+        );
+        $stmt->execute([
+            'user_id' => $userId,
+            'provider' => $identifier->getProvider(),
+            'identifier_id' => $identifier->getId(),
+        ]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        if ($row !== false) {
+            // If soft-deleted, restore it
+            if ($row['deleted_at'] !== null) {
+                $update = $this->pdo->prepare(
+                    'UPDATE ' . $this->schema . 'user_identifiers SET deleted_at = NULL, raw_data = :raw_data WHERE user_id = :user_id AND provider = :provider AND identifier_id = :identifier_id'
+                );
+                $update->execute([
+                    'raw_data' => $identifier->getRawData(),
+                    'user_id' => $userId,
+                    'provider' => $identifier->getProvider(),
+                    'identifier_id' => $identifier->getId(),
+                ]);
+            } else {
+                // Already exists and not deleted, update raw_data if needed
+                $update = $this->pdo->prepare(
+                    'UPDATE ' . $this->schema . 'user_identifiers SET raw_data = :raw_data WHERE user_id = :user_id AND provider = :provider AND identifier_id = :identifier_id'
+                );
+                $update->execute([
+                    'raw_data' => $identifier->getRawData(),
+                    'user_id' => $userId,
+                    'provider' => $identifier->getProvider(),
+                    'identifier_id' => $identifier->getId(),
+                ]);
+            }
+        } else {
+            // Insert new
+            $insert = $this->pdo->prepare(
+                'INSERT INTO ' . $this->schema . 'user_identifiers (user_id, provider, identifier_id, raw_data) VALUES (:user_id, :provider, :identifier_id, :raw_data)'
+            );
+            $insert->execute([
+                'user_id' => $userId,
+                'provider' => $identifier->getProvider(),
+                'identifier_id' => $identifier->getId(),
+                'raw_data' => $identifier->getRawData(),
+            ]);
+        }
+    }
+
+    /**
      * Fetch all identifiers for a user, including soft-deleted.
      *
      * @return array<int, array{provider:string, identifier_id:string, raw_data:mixed, deleted_at:mixed}>
@@ -251,5 +241,32 @@ class UserRepository extends AbstractPDORepository implements UserRepositoryInte
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    // No longer used: deleteIdentifiers
+    private function findUserBy(string $field, string $value): ?UserInterface
+    {
+        $sql = $this->selectFromSQL() . 'WHERE u.' . $field . '= :' . $value;
+
+        return $this->findUser($sql);
+    }
+
+    private function findUser(string $sql): ?UserInterface
+    {
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute();
+        $userData = $stmt->fetch(\PDO::FETCH_ASSOC);
+
+        if ($userData === false) {
+            return null;
+        }
+
+        // Load identifiers from user_identifiers table
+        $userData['identifiers'] = $this->fetchIdentifiers($userData['id']);
+
+        return $this->hydration->hydrate($userData);
+    }
+
+    private function selectFromSQL(): string
+    {
+        return 'SELECT u.additional_data, u.email, u.display_name, u.id, u.system_id, u.verified_at
+            FROM ' . $this->schema . 'user AS u';
+    }
 }
