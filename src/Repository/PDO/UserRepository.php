@@ -86,11 +86,16 @@ class UserRepository extends AbstractPDORepository implements UserRepositoryInte
     public function findUserByIdentity(string $identifier, string|int $id): ?UserInterface
     {
         $sql = $this->selectFromSQL()
-        . 'LEFT JOIN ' . $this->schema . 'user_identifiers AS ui ON ' . $this->schema . 'u.id = ' . $this->schema . 'ui.user_id '
-        . 'WHERE ' . $this->schema . 'ui.provider = :provider AND ' . $this->schema . 'ui.identifier_id = :identifier_id '
-        . 'AND ' . $this->schema . 'ui.deleted_at IS NULL';
+        . 'LEFT JOIN ' . $this->schema . 'user_identifiers AS ui ON u.id = ui.user_id '
+        . 'WHERE ui.provider = :provider AND ui.identifier_id = :identifier_id '
+        . 'AND ui.deleted_at IS NULL';
 
-        return $this->findUser($sql);
+        $params = [
+            'provider' => $identifier,
+            'identifier_id' => $id,
+        ];
+        
+        return $this->findUser($sql, $params);
     }
 
     public function rollback(): void
@@ -234,7 +239,7 @@ class UserRepository extends AbstractPDORepository implements UserRepositoryInte
     private function fetchAllIdentifiersRaw(string|int $userId): array
     {
         $stmt = $this->pdo->prepare(
-            'SELECT provider, identifier_id, raw_data, deleted_at FROM ' . $this->schema . 'user_identifiers WHERE user_id = :user_id'
+            'SELECT provider, identifier_id, raw_data, deleted_at FROM ' . $this->schema . 'user_identifiers WHERE user_id = :user_id '
         );
         $stmt->execute(['user_id' => $userId]);
 
@@ -245,13 +250,13 @@ class UserRepository extends AbstractPDORepository implements UserRepositoryInte
     {
         $sql = $this->selectFromSQL() . 'WHERE u.' . $field . '= :' . $value;
 
-        return $this->findUser($sql);
+        return $this->findUser($sql, [$field => $value]);
     }
 
-    private function findUser(string $sql): ?UserInterface
+    private function findUser(string $sql, array $params): ?UserInterface
     {
         $stmt = $this->pdo->prepare($sql);
-        $stmt->execute();
+        $stmt->execute($params);
         $userData = $stmt->fetch(\PDO::FETCH_ASSOC);
 
         if ($userData === false) {
@@ -267,6 +272,6 @@ class UserRepository extends AbstractPDORepository implements UserRepositoryInte
     private function selectFromSQL(): string
     {
         return 'SELECT u.additional_data, u.email, u.display_name, u.id, u.system_id, u.verified_at
-            FROM ' . $this->schema . 'user AS u';
+            FROM ' . $this->schema . 'users AS u ';
     }
 }
