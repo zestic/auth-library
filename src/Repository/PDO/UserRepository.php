@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Zestic\Auth\Repository\PDO;
 
 use PDO;
-use Zestic\Auth\Context\RegistrationContext;
 use Zestic\Auth\Contract\Entity\UserInterface;
 use Zestic\Auth\Contract\Repository\UserHydrationInterface;
 use Zestic\Auth\Contract\Repository\UserRepositoryInterface;
@@ -33,34 +32,6 @@ class UserRepository extends AbstractPDORepository implements UserRepositoryInte
     public function commit(): bool
     {
         return $this->pdo->commit();
-    }
-
-    public function create(RegistrationContext $context): string|int
-    {
-        $id = $this->generateUniqueIdentifier();
-        $stmt = $this->pdo->prepare(
-            'INSERT INTO ' . $this->schema . 'users (id, email, display_name, additional_data, system_id, verified_at)
-            VALUES (:id, :email, :display_name, :additional_data, :system_id, :verified_at)'
-        );
-        $data = $context->toArray();
-        $data['id'] = $id;
-        try {
-            $stmt->execute($data);
-            // Persist identifiers if present
-            if (!empty($data['identifiers']) && is_array($data['identifiers'])) {
-                foreach ($data['identifiers'] as $identifier) {
-                    if ($identifier instanceof Identifier) {
-                        $this->insertIdentifier($id, $identifier);
-                    } elseif (is_array($identifier) && isset($identifier['provider'], $identifier['id'])) {
-                        $this->insertIdentifier($id, new Identifier($identifier['provider'], $identifier['id'], $identifier['raw_data'] ?? null));
-                    }
-                }
-            }
-
-            return $id;
-        } catch (\PDOException $e) {
-            throw new \RuntimeException('Failed to create user', 0, $e);
-        }
     }
 
     public function emailExists(string $email): bool
@@ -106,16 +77,36 @@ class UserRepository extends AbstractPDORepository implements UserRepositoryInte
     /**
      * @param User $user
      */
+    public function save(UserInterface|User $user): bool
+    {
+        $id = $this->generateUniqueIdentifier();
+        $stmt = $this->pdo->prepare(
+            'INSERT INTO ' . $this->schema . 'users (id, email, display_name)
+            VALUES (:id, :email, :display_name)'
+        );
+        $stmt->execute([
+            'id' => $id,
+            'email' => $user->getEmail(),
+            'display_name' => $user->getDisplayName(),
+        ]);
+        $user->setId($id);
+        
+        return $this->update($user);
+    }
+
+    /**
+     * @param User $user
+     */
     public function update(UserInterface|User $user): bool
     {
         $stmt = $this->pdo->prepare(
-            'UPDATE ' . $this->schema . ' users
+            'UPDATE ' . $this->schema . ' users AS u
         SET email = :email,
             display_name = :display_name,
             additional_data = :additional_data,
             system_id = :system_id,
             verified_at = :verified_at
-        WHERE id = :id'
+        WHERE u.id = :id'
         );
 
         try {
@@ -175,7 +166,11 @@ class UserRepository extends AbstractPDORepository implements UserRepositoryInte
         $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
         $identifiers = [];
         foreach ($rows as $row) {
-            $identifiers[$row['provider']] = new Identifier($row['provider'], $row['identifier_id'], $row['raw_data']);
+            $identifiers[$row['provider']] = new Identifier(
+                $row['provider'], 
+                $row['identifier_id'], 
+                json_decode($row['raw_data'], true)
+            );
         }
 
         return $identifiers;
@@ -200,7 +195,7 @@ class UserRepository extends AbstractPDORepository implements UserRepositoryInte
                     'UPDATE ' . $this->schema . 'user_identifiers SET deleted_at = NULL, raw_data = :raw_data WHERE user_id = :user_id AND provider = :provider AND identifier_id = :identifier_id'
                 );
                 $update->execute([
-                    'raw_data' => $identifier->getRawData(),
+                    'raw_data' => $identifier->getJsonData(),
                     'user_id' => $userId,
                     'provider' => $identifier->getProvider(),
                     'identifier_id' => $identifier->getId(),
@@ -211,7 +206,7 @@ class UserRepository extends AbstractPDORepository implements UserRepositoryInte
                     'UPDATE ' . $this->schema . 'user_identifiers SET raw_data = :raw_data WHERE user_id = :user_id AND provider = :provider AND identifier_id = :identifier_id'
                 );
                 $update->execute([
-                    'raw_data' => $identifier->getRawData(),
+                    'raw_data' => $identifier->getJsonData(),
                     'user_id' => $userId,
                     'provider' => $identifier->getProvider(),
                     'identifier_id' => $identifier->getId(),
@@ -226,7 +221,7 @@ class UserRepository extends AbstractPDORepository implements UserRepositoryInte
                 'user_id' => $userId,
                 'provider' => $identifier->getProvider(),
                 'identifier_id' => $identifier->getId(),
-                'raw_data' => $identifier->getRawData(),
+                'raw_data' => $identifier->getJsonData(),
             ]);
         }
     }

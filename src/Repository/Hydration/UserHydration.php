@@ -21,7 +21,7 @@ class UserHydration implements UserHydrationInterface
     public function dehydrate(UserInterface|User $user): array
     {
         return [
-            'additional_data' => $user->getAdditionalData(),
+            'additional_data' => json_encode($user->getAdditionalData()),
             'display_name' => $user->getDisplayName(),
             'email' => $user->getEmail(),
             'id' => $user->getId(),
@@ -44,7 +44,7 @@ class UserHydration implements UserHydrationInterface
     public function update(UserInterface|User $user, array $data): void
     {
         if (isset($data['additional_data'])) {
-            $user->setAdditionalData($data['additional_data']);
+            $user->setAdditionalData(json_decode($data['additional_data'], true));
         }
         if (isset($data['display_name'])) {
             $user->setDisplayName($data['display_name']);

@@ -13,8 +13,6 @@ interface UserRepositoryInterface
 
     public function commit(): bool;
 
-    public function create(RegistrationContext $context): string|int;
-
     public function emailExists(string $email): bool;
 
     public function findUserById(string $id): ?UserInterface;
@@ -22,6 +20,8 @@ interface UserRepositoryInterface
     public function findUserByEmail(string $email): ?UserInterface;
 
     public function rollback(): void;
+
+    public function save(UserInterface $user): bool;
 
     public function update(UserInterface $user): bool;
 }

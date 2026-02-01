@@ -25,6 +25,11 @@ class Identifier
         return $this->id;
     }
 
+    public function getJsonData(): string
+    {
+        return json_encode($this->rawData);
+    }
+
     /**
      * @return array<mixed, mixed> $rawData
      */
