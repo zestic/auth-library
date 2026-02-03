@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Zestic\Auth\Contract\Repository;
 
-use Zestic\Auth\Context\RegistrationContext;
 use Zestic\Auth\Contract\Entity\UserInterface;
 
 interface UserRepositoryInterface

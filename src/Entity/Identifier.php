@@ -27,7 +27,9 @@ class Identifier
 
     public function getJsonData(): string
     {
-        return json_encode($this->rawData);
+        $json = json_encode($this->rawData);
+
+        return $json === false ? '{}' : $json;
     }
 
     /**

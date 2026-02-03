@@ -65,7 +65,7 @@ class UserRepository extends AbstractPDORepository implements UserRepositoryInte
             'provider' => $identifier,
             'identifier_id' => $id,
         ];
-        
+
         return $this->findUser($sql, $params);
     }
 
@@ -90,7 +90,7 @@ class UserRepository extends AbstractPDORepository implements UserRepositoryInte
             'display_name' => $user->getDisplayName(),
         ]);
         $user->setId($id);
-        
+
         return $this->update($user);
     }
 
@@ -167,8 +167,8 @@ class UserRepository extends AbstractPDORepository implements UserRepositoryInte
         $identifiers = [];
         foreach ($rows as $row) {
             $identifiers[$row['provider']] = new Identifier(
-                $row['provider'], 
-                $row['identifier_id'], 
+                $row['provider'],
+                $row['identifier_id'],
                 json_decode($row['raw_data'], true)
             );
         }
@@ -248,6 +248,12 @@ class UserRepository extends AbstractPDORepository implements UserRepositoryInte
         return $this->findUser($sql, [$field => $value]);
     }
 
+    /**
+     * @param string               $sql
+     * @param array<string, mixed> $params
+     *
+     * @return null|UserInterface
+     */
     private function findUser(string $sql, array $params): ?UserInterface
     {
         $stmt = $this->pdo->prepare($sql);
