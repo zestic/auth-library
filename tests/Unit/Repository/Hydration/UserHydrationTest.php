@@ -32,7 +32,7 @@ class UserHydrationTest extends TestCase
         $result = $hydrator->dehydrate($user);
 
         $expected = [
-            'additional_data' => self::ADDITIONAL_DATA,
+            'additional_data' => json_encode(self::ADDITIONAL_DATA),
             'display_name' => self::DISPLAY_NAME,
             'email' => self::EMAIL,
             'id' => self::ID,
@@ -45,7 +45,7 @@ class UserHydrationTest extends TestCase
     public function testHydrateCreatesUserWithData(): void
     {
         $data = [
-            'additional_data' => self::ADDITIONAL_DATA,
+            'additional_data' => json_encode(self::ADDITIONAL_DATA),
             'display_name' => self::DISPLAY_NAME,
             'email' => self::EMAIL,
             'id' => self::ID,
@@ -74,7 +74,7 @@ class UserHydrationTest extends TestCase
         $user = new User();
         $hydrator = new UserHydration();
         $data = [
-            'additional_data' => self::ADDITIONAL_DATA,
+            'additional_data' => json_encode(self::ADDITIONAL_DATA),
             'display_name' => self::DISPLAY_NAME,
             'email' => self::EMAIL,
             'id' => self::ID,
